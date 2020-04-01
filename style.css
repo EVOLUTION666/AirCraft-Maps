@@ -6,12 +6,24 @@ html, body {
     height: 100%;
 }
 
-#chartDiv {
+#map {
     width: 100%;
     height: 100%;
 }
 
+.marker {
+    width: 15px;
+    height: 15px;
+    background: #ffffff;
+    border: 4px solid #1e87f0;
+    border-radius: 50%;
+}
+
 #fieldOfBox {
+
+}
+
+#content {
     padding: 10px;
     background-color: white;
     position: fixed;
@@ -22,8 +34,26 @@ html, body {
     -moz-box-shadow: 17px 10px 17px -14px rgba(0,0,0,0.75);
     box-shadow: 17px 10px 17px -14px rgba(0,0,0,0.75);
     text-align: right;
+    width: 100%;
+}
+
+#flights {
+    height: 300px;
+    overflow-y: scroll;
 }
 
 #fieldOfBox div {
     margin-bottom: 10px;
+}
+
+#fieldOfBox input, #fieldOfBox select {
+    width: 100%;
+}
+
+#select2-searchAirPort-container {
+    text-align: left;
+}
+
+#datesBox {
+    display: none;
 }

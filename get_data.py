@@ -1,14 +1,20 @@
-import requests
-import webbrowser
+import json
 
-# get current data from Central Bank
-url = 'http://api.aviationstack.com/v1/flights?access_key=e7fb4a4cefd2b81f3d8152e3397a4d2a'
+lines = open('airports.csv', encoding='utf-8', newline='').readlines()
 
-request = requests.get(url, allow_redirects=True)
-data = "window.flights = JSON.parse('" + request.text + "')"
-open('flights.js', 'w').write(data)
+coordinatesAirports = []
 
-# open HTML file in browser
-'''new = 2
-urlExe = "index.html"
-webbrowser.open(urlExe, new=new)'''
+for line in lines:
+    data_line = line.replace('"', '').replace("'", "").split(',')
+    if data_line[2] == "large_airport":
+        array_airport = [data_line[3], data_line[4], data_line[5], data_line[1]]
+        coordinatesAirports.append(array_airport)
+
+
+coordinatesAirports = sorted(coordinatesAirports, key=lambda x: x[0])
+
+
+# put data in JS file
+dataJson = json.dumps(coordinatesAirports)
+content = "window.data = JSON.parse('" + dataJson + "')"
+open('data.js', 'w').write(content)

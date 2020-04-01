@@ -3,45 +3,80 @@
 <head>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="JQueryUI/jquery-ui-1.12.1.custom/jquery-ui.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet"/>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl.css' rel='stylesheet'/>
+    <!-- UIkit CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.3.7/dist/css/uikit.min.css"/>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
     <title>Simple Polylines</title>
 </head>
 <body>
 
-<div id="fieldOfBox">
-    <div>
-        <label>Дата отлета:</label>
-        <input id="fieldOfDateStart">
+<div id="content" class="uk-grid uk-grid-small">
+    <div class="uk-width-1-3">
+        <div class="uk-form-horizontal" id="fieldOfBox">
+            <div class="uk-margin">
+                <label class="uk-form-label" for="">Поиск аэропорта: </label>
+                <div class="uk-form-controls">
+                    <select id="searchAirPort">
+                        <option value="">- выбрать -</option>
+                    </select>
+                </div>
+            </div>
+
+
+            <div id="datesBox">
+                <div class="uk-margin">
+                    <label class="uk-form-label" for="">Дата отлета:</label>
+                    <div class="uk-form-controls">
+                        <input id="fieldOfDateStart" class="uk-input">
+                    </div>
+                </div>
+
+                <div class="uk-margin">
+                    <label class="uk-form-label" for="">Дата прилета:</label>
+                    <div class="uk-form-controls">
+                        <input id="fieldOfDateFinish" class="uk-input">
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="uk-margin">
+                <label class="uk-form-label" for="">Номер рейса:</label>
+                <div class="uk-form-controls">
+                    <input id="fieldOfNumber" class="uk-input">
+                </div>
+            </div>
+
+            <div class="uk-margin">
+                <input type="button" class="uk-button uk-button-primary" value="Запросить" onclick="getDataFlight()">
+            </div>
+        </div>
     </div>
-
-    <div>
-        <label>Дата прилета:</label>
-        <input id="fieldOfDateFinish">
+    <div id="flights" class="uk-width-2-3 uk-text-left">
+        <div v-for="fly in flights">{{ fly.icao24 }}</div>
     </div>
-
-    <div>
-        <label>Номер рейса:</label>
-        <input id="fieldOfNumber">
-    </div>
-
-
-    <input type="submit" value="Запросить" onclick="getDataFlight()">
 </div>
 
-<div id="chartDiv"></div>
 
-<script src="https://www.amcharts.com/lib/4/core.js"></script>
-<script src="https://www.amcharts.com/lib/4/maps.js"></script>
-<script src="https://www.amcharts.com/lib/4/geodata/worldLow.js"></script>
+<div id="map"></div>
+
+
+<script src='https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl.js'></script>
+
 <script
         src="https://code.jquery.com/jquery-3.4.1.min.js"
         integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
         crossorigin="anonymous"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.3.7/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.3.7/dist/js/uikit-icons.min.js"></script>
 <script src="JQueryUI/jquery-ui-1.12.1.custom/jquery-ui.js"></script>
-
-<script src="flights.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+<script src="data.js"></script>
 <script src="script.js"></script>
 
 </body>

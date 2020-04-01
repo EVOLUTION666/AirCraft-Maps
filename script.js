@@ -1,82 +1,39 @@
-/**
- * ---------------------------------------
- * This demo was created using amCharts 4.
- *
- * For more information visit:
- * https://www.amcharts.com/
- *
- * Documentation is available at:
- * https://www.amcharts.com/docs/v4/
- * ---------------------------------------
- */
+mapboxgl.accessToken = 'pk.eyJ1IjoiZXZvbHV0aW9uNjY2IiwiYSI6ImNrOGdnNjV1aTAxMzczZXJ3ejY2ajJxN2cifQ.yf5VmzWQ8zFGjvjRdVye7A';
 
-// Create map instance
-var chart = am4core.create("chartDiv", am4maps.MapChart);
+let map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11'
+});
 
-// Set map definition
-chart.geodata = am4geodata_worldLow;
+function searchAirport(codeAirport) {
+    return window.data.find(function (item) {
+        return item[3] == codeAirport
+    })
+}
 
-// Set projection
-chart.projection = new am4maps.projections.Miller();
+function addToMap(airport) {
+    $('.marker').remove()
 
-// Create map polygon series
-var polygonSeries = chart.series.push(new am4maps.MapPolygonSeries());
+    if (airport) {
+        let el = document.createElement('div');
+        el.className = 'marker';
 
-// Make map load polygon (like country names) data from GeoJSON
-polygonSeries.useGeodata = true;
+        // create the popup
+        let popup = new mapboxgl.Popup({offset: 15}).setHTML(
+            "Название: "  + airport[0] + "<br>ICAO: " + airport[3]
+        );
 
-// Configure series
-var polygonTemplate = polygonSeries.mapPolygons.template;
-polygonTemplate.tooltipText = "{name}";
-polygonTemplate.fill = am4core.color("#74B266");
+        new mapboxgl.Marker(el)
+            .setLngLat([airport[2], airport[1]])
+            .setPopup(popup)
+            .addTo(map)
 
-// Remove Antarctica
-polygonSeries.exclude = ["AQ"];
-
-// Add some data
-polygonSeries.data = [{
-    "id": "US",
-    "name": "United States",
-    "value": 100
-}, {
-    "id": "FR",
-    "name": "France",
-    "value": 50
-}];
-
-// Create image series
-var imageSeries = chart.series.push(new am4maps.MapImageSeries());
-
-// Create a circle image in image series template so it gets replicated to all new images
-var imageSeriesTemplate = imageSeries.mapImages.template;
-var circle = imageSeriesTemplate.createChild(am4core.Circle);
-circle.radius = 8;
-circle.fill = am4core.color("#e03e96");
-circle.stroke = am4core.color("#FFFFFF");
-circle.strokeWidth = 3;
-circle.nonScaling = true;
-circle.tooltipText = "{title}";
-
-// Set property fields
-imageSeriesTemplate.propertyFields.latitude = "latitude";
-imageSeriesTemplate.propertyFields.longitude = "longitude";
-
-// Add data for the three cities
-imageSeries.data = [];
-
-// Add line series
-var lineSeries = chart.series.push(new am4maps.MapLineSeries());
-lineSeries.mapLines.template.strokeWidth = 4;
-lineSeries.mapLines.template.stroke = am4core.color("#e03e96");
-
-lineSeries.data = [{
-    "multiGeoLine": [
-        [
-            {"latitude": 48.856614, "longitude": 2.352222},
-            {"latitude": 40.712775, "longitude": -74.005973}
-        ]
-    ]
-}];
+        map.flyTo({
+            center: [airport[2], airport[1]],
+            essential: true
+        });
+    }
+}
 
 function getDataFlight() {
     let numberFlight = document.getElementById("fieldOfNumber").value;
@@ -84,20 +41,36 @@ function getDataFlight() {
     let dateFinish = document.getElementById("fieldOfDateFinish").value;
 
     dateStart = dateStart.split('/');
-    dateFinish = dateFinish.split('/');
+    dateStop = dateFinish.split('/');
 
-    let unixTimeStart = new Date(dateStart[2], dateStart[1], dateStart[0]) / 1000;
-    let unixTimeStop = new Date(dateFinish[2], dateFinish[1], dateFinish[0]) / 1000;
+    let dateStartObj = new Date();
+    dateStartObj.setFullYear(dateStart[2])
+    dateStartObj.setMonth(dateStart[1] - 1)
+    dateStartObj.setDate(dateStart[0])
 
+    let dateStopObj = new Date();
+    dateStopObj.setFullYear(dateStop[2])
+    dateStopObj.setMonth(dateStop[1] - 1)
+    dateStopObj.setDate(dateStop[0])
+
+    let unixTimeStart = Math.floor(dateStartObj.getTime() / 1000)
+    let unixTimeStop = Math.floor(dateStopObj.getTime() / 1000)
 
     $.ajax({
         type: 'GET',
-        url: ' https://opensky-network.org/api/flights/all?begin=' + unixTimeStart + '&end=' + unixTimeStop,
+        url: 'https://opensky-network.org/api/flights/arrival?begin=' + unixTimeStart + '&end=' + unixTimeStop + '&airport=' + $('#searchAirPort').val(),
         success: function (msg) {
-            console.log(msg)
+            vueObj.setFlights(msg)
         }
     })
+}
 
+function showDates(airportId) {
+    if (airportId == '') {
+        $('#datesBox').hide()
+    } else {
+        $('#datesBox').show()
+    }
 }
 
 let time = Date.now();
@@ -105,6 +78,35 @@ let time = Date.now();
 $("#fieldOfDateStart").datepicker({
     "dateFormat": 'dd/mm/yy'
 });
+
 $("#fieldOfDateFinish").datepicker({
     "dateFormat": 'dd/mm/yy'
 });
+
+let options = window.data.map(function (item) {
+    return {id: item[3], text: item[0]}
+});
+
+$(document).ready(function () {
+    $('#searchAirPort').select2({
+        data: options
+    }).on('select2:select', function (e) {
+        let airPortId = e.params.data.id
+        let airPort = searchAirport(airPortId)
+
+        showDates(airPortId)
+        addToMap(airPort)
+    });
+});
+
+var vueObj = new Vue({
+    el: '#content',
+    methods: {
+        setFlights: function (newFlights) {
+            this.flights = newFlights
+        }
+    },
+    data: {
+        flights: [],
+    }
+})
