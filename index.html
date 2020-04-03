@@ -1,83 +1,103 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="JQueryUI/jquery-ui-1.12.1.custom/jquery-ui.css">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet"/>
-    <link href='https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl.css' rel='stylesheet'/>
-    <!-- UIkit CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.3.7/dist/css/uikit.min.css"/>
+    <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css" rel="stylesheet"/>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
     <title>Simple Polylines</title>
 </head>
 <body>
 
-<div id="content" class="uk-grid uk-grid-small">
-    <div class="uk-width-1-3">
-        <div class="uk-form-horizontal" id="fieldOfBox">
-            <div class="uk-margin">
-                <label class="uk-form-label" for="">Поиск аэропорта: </label>
-                <div class="uk-form-controls">
-                    <select id="searchAirPort">
-                        <option value="">- выбрать -</option>
-                    </select>
-                </div>
-            </div>
+<div id="app">
+    <div id="content">
+        <button class="uk-button uk-button-primary uk-position-top-left"
+                @click="showSearch = true"
+                v-show="!showSearch"
+                style="z-index: 10"
+        >
+            Открыть
+        </button>
+
+        <div id="search" class="uk-grid uk-grid-small uk-grid-divider" v-show="showSearch">
+            <div class="uk-width-auto" id="searchBox">
+                <div id="fieldOfBox">
+                    <div class="uk-grid uk-grid-small">
+                        <div class="label">
+                            <label class="uk-form-label">Поиск аэропорта: </label>
+                        </div>
+                        <div class="uk-width-expand">
+                            <v-select :label="'text'"
+                                      :options="optionsAirports"
+                                      v-model="selectedAirportCode"
+                                      :reduce="airport => airport.id">
+                            </v-select>
+                        </div>
+                    </div>
 
 
-            <div id="datesBox">
-                <div class="uk-margin">
-                    <label class="uk-form-label" for="">Дата отлета:</label>
-                    <div class="uk-form-controls">
-                        <input id="fieldOfDateStart" class="uk-input">
+                    <div class="uk-margin" v-if="selectedAirportCode">
+                        <div class="uk-grid uk-grid-small">
+                            <div class="label">
+                                <label class="uk-form-label">Дата отлета:</label>
+                            </div>
+                            <div class="uk-width-auto">
+                                <v-datepicker :input-class="'uk-input'" v-model="dateStart"></v-datepicker>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="uk-margin" v-if="selectedAirportCode">
+                        <div class="uk-grid uk-grid-small">
+                            <div class="label">
+                                <label class="uk-form-label">Дата отлета:</label>
+                            </div>
+                            <div class="uk-width-auto">
+                                <v-datepicker :input-class="'uk-input'" v-model="dateFinish"></v-datepicker>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="uk-margin">
+                        <input type="button" class="uk-button uk-button-primary uk-width-1-1" value="Запросить" @click="getDataFlight" :disabled="load || !selectedAirportCode">
+                    </div>
+                    <div class="uk-margin">
+                        <button class="uk-button uk-button-default uk-width-1-1" @click="showSearch = false">Закрыть</button>
                     </div>
                 </div>
 
-                <div class="uk-margin">
-                    <label class="uk-form-label" for="">Дата прилета:</label>
-                    <div class="uk-form-controls">
-                        <input id="fieldOfDateFinish" class="uk-input">
-                    </div>
-                </div>
             </div>
-
-
-            <div class="uk-margin">
-                <label class="uk-form-label" for="">Номер рейса:</label>
-                <div class="uk-form-controls">
-                    <input id="fieldOfNumber" class="uk-input">
-                </div>
-            </div>
-
-            <div class="uk-margin">
-                <input type="button" class="uk-button uk-button-primary" value="Запросить" onclick="getDataFlight()">
+            <div id="flights" class="uk-width-expand" v-if="flights.length">
+                <table class="uk-table uk-table-small uk-table-divider">
+                    <thead>
+                    <tr>
+                        <th>Aircraft ICAO24</th>
+                        <th>Departure Airport</th>
+                        <th>Arrival Airport</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-for="flight in flights">
+                        <td>{{ flight.icao24 }}</td>
+                        <td>{{ getAirportNameByCode(flight.estDepartureAirport) }}</td>
+                        <td>{{ getAirportNameByCode(flight.estArrivalAirport) }}</td>
+                        <td>
+                            <button class="uk-button uk-button-primary" @click="showPath(flight)" :disabled="load">Показать</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-    <div id="flights" class="uk-width-2-3 uk-text-left">
-        <div v-for="fly in flights">{{ fly.icao24 }}</div>
-    </div>
+
+
+    <div id="map"></div>
 </div>
 
 
-<div id="map"></div>
-
-
-<script src='https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl.js'></script>
-
-<script
-        src="https://code.jquery.com/jquery-3.4.1.min.js"
-        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
-        crossorigin="anonymous"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/uikit@3.3.7/dist/js/uikit.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/uikit@3.3.7/dist/js/uikit-icons.min.js"></script>
-<script src="JQueryUI/jquery-ui-1.12.1.custom/jquery-ui.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
-<script src="data.js"></script>
-<script src="script.js"></script>
+<script src="script_bundle.js"></script>
 
 </body>
 </html>
